@@ -1,0 +1,1609 @@
+/dts-v1/;
+
+/ {
+	#address-cells = <0x01>;
+	#size-cells = <0x01>;
+	compatible = "xlnx,zynq-7000";
+	interrupt-parent = <0x01>;
+	model = "Analog Devices PlutoSDR Rev.A (Z7010/AD9363)";
+
+	cpus {
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+
+		cpu@0 {
+			compatible = "arm,cortex-a9";
+			device_type = "cpu";
+			reg = <0x00>;
+			clocks = <0x02 0x03>;
+			clock-latency = <0x3e8>;
+			cpu0-supply = <0x03>;
+			operating-points = <0xa2c2b 0xf4240 0x51616 0xf4240>;
+			phandle = <0x12>;
+		};
+
+		cpu@1 {
+			compatible = "arm,cortex-a9";
+			device_type = "cpu";
+			reg = <0x01>;
+			clocks = <0x02 0x03>;
+			phandle = <0x14>;
+		};
+	};
+
+	fpga-full {
+		compatible = "fpga-region";
+		fpga-mgr = <0x04>;
+		#address-cells = <0x01>;
+		#size-cells = <0x01>;
+		ranges;
+		phandle = <0x19>;
+	};
+
+	pmu@f8891000 {
+		compatible = "arm,cortex-a9-pmu";
+		interrupts = <0x00 0x05 0x04 0x00 0x06 0x04>;
+		interrupt-parent = <0x01>;
+		reg = <0xf8891000 0x1000 0xf8893000 0x1000>;
+	};
+
+	fixedregulator {
+		compatible = "regulator-fixed";
+		regulator-name = "VCCPINT";
+		regulator-min-microvolt = <0xf4240>;
+		regulator-max-microvolt = <0xf4240>;
+		regulator-boot-on;
+		regulator-always-on;
+		phandle = <0x03>;
+	};
+
+	replicator {
+		compatible = "arm,coresight-static-replicator";
+		clocks = <0x02 0x1b 0x02 0x2e 0x02 0x2f>;
+		clock-names = "apb_pclk", "dbg_trc", "dbg_apb";
+
+		out-ports {
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+
+			port@0 {
+				reg = <0x00>;
+
+				endpoint {
+					remote-endpoint = <0x05>;
+					phandle = <0x0e>;
+				};
+			};
+
+			port@1 {
+				reg = <0x01>;
+
+				endpoint {
+					remote-endpoint = <0x06>;
+					phandle = <0x0d>;
+				};
+			};
+		};
+
+		in-ports {
+
+			port {
+
+				endpoint {
+					remote-endpoint = <0x07>;
+					phandle = <0x0f>;
+				};
+			};
+		};
+	};
+	
+	ddr3-timing-parameters@f8006000 {
+		compatible = "ddr3-timings";
+		reg = <0xf8006000 0x1000>;
+		tRCD-ns = <0x0d>;
+		tRP-ns = <0x0d>;
+		tRC-ns = <0x31>;
+		tRAS-ns = <0x24>;
+		tWR-ns = <0x0f>;
+		tRFC-ns = <0xa0>;
+		tRRD-ns = <0x06>;
+		tWTR-ns = <0x08>;
+		tRTP-ns = <0x08>;
+		tFAW-ns = <0x1e>;
+		pll-multiply = <0x20>;		// Змінено для кращої підтримки DDR3
+		pll-divide = <0x01>;
+		clock-output-frequency = <0x2DC6C00>;	// 48MHz
+		clock-accuracy = <0x64>;
+		phandle = <0x55>;
+	};
+
+	memory@0 {
+		compatible = "micron,mt41j64m16jt-187e";
+		reg = <0x00 0x20000000>;
+		manufacturer = "Micron";
+		memory-type = "DDR3";
+		speed-grade = "1866";
+		device-width = <0x10>;
+		clock-frequency = <0x1fc4ef40>;
+		max-transfer-rate = <0x6f38e680>;
+		voltage = <0x5dc>;
+		temperature-range = <0xffffffd8 0x55>;
+		timing-parameters = <0x05>;
+		temperature-monitoring;
+	};
+
+	memory@20000000 {
+		compatible = "micron,mt41j64m16jt-187e";
+		reg = <0x20000000 0x20000000>;
+		manufacturer = "Micron";
+		memory-type = "DDR3";
+		speed-grade = "1866";
+		device-width = <0x10>;
+		clock-frequency = <0x1fc4ef40>;
+		max-transfer-rate = <0x6f38e680>;
+		voltage = <0x5dc>;
+		temperature-range = <0xffffffd8 0x55>;
+		timing-parameters = <0x05>;
+		temperature-monitoring;
+	};
+
+	temperature-sensor@f8007100 {
+		compatible = "xlnx,zynq-temp";
+		reg = <0xf8007100 0x20>;
+		interrupts = <0x00 0x08 0x04>;
+		interrupt-parent = <0x01>;
+		#thermal-sensor-cells = <0x00>;
+		xlnx,channels = "temp";
+		phandle = <0x57>;
+	};
+
+	thermal-zones {
+
+		cpu-thermal {
+			polling-delay-passive = <0xfa>;
+			polling-delay = <0x3e8>;
+			thermal-sensors = <0x57>;
+
+			trips {
+
+				cpu-alert {
+					temperature = <0x14c08>;
+					hysteresis = <0x7d0>;
+					type = "passive";
+				};
+
+				cpu-crit {
+					temperature = <0x17318>;
+					hysteresis = <0x7d0>;
+					type = "critical";
+				};
+			};
+		};
+	};
+
+	amba {
+		u-boot,dm-pre-reloc;
+		compatible = "simple-bus";
+		#address-cells = <0x01>;
+		#size-cells = <0x01>;
+		interrupt-parent = <0x01>;
+		ranges;
+		phandle = <0x1a>;
+
+		adc@f8007100 {
+			compatible = "xlnx,zynq-xadc-1.00.a";
+			reg = <0xf8007100 0x20>;
+			interrupts = <0x00 0x07 0x04>;
+			interrupt-parent = <0x01>;
+			clocks = <0x02 0x0c>;
+			phandle = <0x1b>;
+
+			xlnx,channels {
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+
+				channel@0 {
+					reg = <0x00>;
+				};
+			};
+		};
+
+		can@e0008000 {
+			compatible = "xlnx,zynq-can-1.0";
+			status = "disabled";
+			clocks = <0x02 0x13 0x02 0x24>;
+			clock-names = "can_clk", "pclk";
+			reg = <0xe0008000 0x1000>;
+			interrupts = <0x00 0x1c 0x04>;
+			interrupt-parent = <0x01>;
+			tx-fifo-depth = <0x40>;
+			rx-fifo-depth = <0x40>;
+			phandle = <0x1c>;
+		};
+
+		can@e0009000 {
+			compatible = "xlnx,zynq-can-1.0";
+			status = "disabled";
+			clocks = <0x02 0x14 0x02 0x25>;
+			clock-names = "can_clk", "pclk";
+			reg = <0xe0009000 0x1000>;
+			interrupts = <0x00 0x33 0x04>;
+			interrupt-parent = <0x01>;
+			tx-fifo-depth = <0x40>;
+			rx-fifo-depth = <0x40>;
+			phandle = <0x1d>;
+		};
+
+		gpio@e000a000 {
+			compatible = "xlnx,zynq-gpio-1.0";
+			#gpio-cells = <0x02>;
+			clocks = <0x02 0x2a>;
+			gpio-controller;
+			interrupt-controller;
+			#interrupt-cells = <0x02>;
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x14 0x04>;
+			reg = <0xe000a000 0x1000>;
+			
+			phandle = <0x09>;
+			xlnx,mio-gpio-mask = <0xffffffff>;   // Маска для MIO GPIO
+			xlnx,emio-gpio-width = <64>;		// Ширина EMIO
+			xlnx,mio-gpio-width = <54>;			// Ширина MIO
+			gpio-base = <0>;					// Встановлюємо базу GPIO на 0
+			gpio-count = <118>;					// Загальна кількість GPIO (54 MIO + 64 EMIO)
+			gpio-offset = <0>;					// Додано для явного встановлення офсету
+			emio-gpio-width = <18>;              // Додаємо явний параметр для драйвера Linux
+
+			dip_switch {
+				compatible = "gpio-keys";		// Змінено назад на gpio-keys
+				#gpio-cells = <0x02>;
+				autorepeat;						// Додано для кращої обробки
+				pinctrl-names = "default";
+				pinctrl-0 = <0x56>;
+
+				sw_boot0 {
+					label = "Boot Switch 0";
+					gpios = <0x09 0x04 0x01>;
+					linux,code = <0x100>;					// KEY_SETUP
+				};
+
+				sw_boot1 {
+					label = "Boot Switch 1";
+					gpios = <0x09 0x05 0x01>;
+					linux,code = <0x101>;        // KEY_SETUP + 1
+				};
+
+				sw_aux0 {
+					label = "Aux Switch 0";
+					gpios = <0x09 0x07 0x01>;
+					linux,code = <0x102>;        // KEY_SETUP + 2
+				};
+
+				sw_aux1 {
+					label = "Aux Switch 1";
+					gpios = <0x09 0x08 0x01>;
+					linux,code = <0x103>;        // KEY_SETUP + 3
+				};
+
+				boot_modes {
+					compatible = "boot-mode-map";
+					default-mode = "sd";
+
+					jtag {
+						boot-mode = <0x00>;
+						label = "JTAG Boot Mode";
+					};
+
+					nand {
+						boot-mode = <0x01>;
+						label = "NAND Boot Mode";
+					};
+
+					spi {
+						boot-mode = <0x02>;
+						label = "SPI Boot Mode";
+					};
+
+					sd {
+						boot-mode = <0x03>;
+						label = "SD Boot Mode";
+					};
+				};
+			};
+		};
+
+		i2c@e0004000 {
+			compatible = "cdns,i2c-r1p10";
+			status = "okay";                      // змінено с "disabled" на "okay"
+			clocks = <0x02 0x26>;
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x19 0x04>;
+			reg = <0xe0004000 0x1000>;
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+			clock-frequency = <100000>;           // частота шини 100 кГц
+			phandle = <0x1e>;
+    
+			eeprom@50 {                           // визначення EEPROM 24LC02
+				compatible = "atmel,24c02";       // сумісність із 24LC02
+				reg = <0x50>;                     // стандартна адреса для 24LC02
+				pagesize = <8>;                   // размір сторінки для 24LC02
+			};
+		};
+
+		i2c@e0005000 {
+			compatible = "cdns,i2c-r1p10";
+			status = "disabled";
+			clocks = <0x02 0x27>;
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x30 0x04>;
+			reg = <0xe0005000 0x1000>;
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+			phandle = <0x1f>;
+		};
+
+		interrupt-controller@f8f01000 {
+			compatible = "arm,cortex-a9-gic";
+			#interrupt-cells = <0x03>;
+			interrupt-controller;
+			reg = <0xf8f01000 0x1000 0xf8f00100 0x100>;
+			phandle = <0x01>;
+		};
+
+		cache-controller@f8f02000 {
+			compatible = "arm,pl310-cache";
+			reg = <0xf8f02000 0x1000>;
+			interrupts = <0x00 0x02 0x04>;
+			arm,data-latency = <0x03 0x02 0x02>;
+			arm,tag-latency = <0x02 0x02 0x02>;
+			cache-unified;
+			cache-level = <0x02>;
+			phandle = <0x20>;
+		};
+
+		memory-controller@f8006000 {
+			compatible = "xlnx,zynq-ddrc-a05";
+			reg = <0xf8006000 0x1000>;
+			phandle = <0x21>;
+		};
+
+		ocmc@f800c000 {
+			compatible = "xlnx,zynq-ocmc-1.0";
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x03 0x04>;
+			reg = <0xf800c000 0x1000>;
+			phandle = <0x22>;
+		};
+
+		serial@e0000000 {
+			compatible = "xlnx,xuartps", "cdns,uart-r1p8";
+			status = "disabled";
+			clocks = <0x02 0x17 0x02 0x28>;
+			clock-names = "uart_clk", "pclk";
+			reg = <0xe0000000 0x1000>;
+			interrupts = <0x00 0x1b 0x04>;
+			phandle = <0x23>;
+		};
+
+		serial@e0001000 {
+			compatible = "xlnx,xuartps", "cdns,uart-r1p8";
+			status = "okay";
+			clocks = <0x02 0x18 0x02 0x29>;
+			clock-names = "uart_clk", "pclk";
+			reg = <0xe0001000 0x1000>;
+			interrupts = <0x00 0x32 0x04>;
+			phandle = <0x24>;
+		};
+		
+		nand@e1000000 {
+			compatible = "xlnx,zynq-nand";
+			reg = <0xe1000000 0x1000>;
+			bank-width = <0x02>;
+			nand-bus-width = <0x08>;
+			nand-ecc-mode = "hw";
+			nand-ecc-strength = <0x08>;
+			nand-ecc-step-size = <0x200>;
+			nand-on-flash-bbt;
+			temperature-monitoring;
+			page-size = <0x1000>;
+			block-size = <0x80000>;
+			oob-size = <0x80>;
+
+			partitions {
+				compatible = "fixed-partitions";
+				#address-cells = <0x01>;
+				#size-cells = <0x01>;
+
+				partition@0 {
+					label = "boot";
+					reg = <0x00 0x1000000>;
+					read-only;
+				};
+
+				partition@1 {
+					label = "kernel";
+					reg = <0x1000000 0x2000000>;
+				};
+
+				partition@2 {
+					label = "rootfs";
+					reg = <0x3000000 0x1d000000>;
+				};
+			};
+		};
+
+		reserved-memory {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+			
+			framebuffer_reserved: framebuffer@38000000 {
+				reg = <0x38000000 0x00800000>;
+				no-map;
+			};
+		};
+
+		framebuffer@38000000 {
+			compatible = "simple-framebuffer";
+			reg = <0x38000000 0x00800000>;  // 8MB в кінці доступної пам'яті, можна збільшити за потреби
+			width = <1280>;  // Встановіть вашу розділову здатність
+			height = <720>;  // Встановіть вашу розділову здатність
+			stride = <(1280 * 4)>;  // width * bytes per pixel
+			format = "a8r8g8b8";
+			status = "okay";
+		};
+
+		spi@e0006000 {
+			compatible = "xlnx,zynq-spi-r1p6";
+			reg = <0xe0006000 0x1000>;
+			status = "okay";
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x1a 0x04>;
+			clocks = <0x02 0x19 0x02 0x22>;
+			clock-names = "ref_clk", "pclk";
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+			phandle = <0x25>;
+
+			ad9361-phy@0 {
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+				#clock-cells = <0x01>;
+				compatible = "adi,ad9361";
+				reg = <0x00>;
+				spi-cpha;
+				spi-max-frequency = <0x989680>;
+				clocks = <0x08 0x00>;						// Зовнішнє тактування AD9361 */
+				clock-names = "ad9361_ext_refclk";
+				clock-output-names = "rx_sampl_clk", "tx_sampl_clk";
+				adi,pp-tx-swap-enable;
+				adi,pp-rx-swap-enable;
+				adi,rx-frame-pulse-mode-enable;
+				adi,xo-disable-use-ext-refclk-enable;
+				adi,full-port-enable;
+				adi,digital-interface-tune-fir-disable;
+				adi,digital-interface-tune-skip-mode = <0x02>;  // Змінено
+				adi,tx-fb-clock-delay = <0x02>;					// Змінено
+				adi,tx-data-delay = <0x00>;						// Змінено
+				adi,swap-ports-enable;
+				adi,frequency-division-duplex-mode-enable;
+				adi,rx-rf-port-input-select = <0x00>;
+				adi,rx-rf-port-input-select-lock-enable;
+				adi,tx-rf-port-input-select = <0x00>;
+				adi,tx-rf-port-input-select-lock-enable;
+				adi,tx-attenuation-mdB = <0x2710>;
+				adi,tx-lo-powerdown-managed-enable;
+				adi,rf-rx-bandwidth-hz = <0x112a880>;
+				adi,rf-tx-bandwidth-hz = <0x112a880>;
+				adi,rx-synthesizer-frequency-hz = <0x00 0x8f0d1800>;
+				adi,tx-synthesizer-frequency-hz = <0x00 0x92080880>;
+				adi,rx-path-clock-frequencies = <0x3a980000 0xea60000 0x7530000 0x3a98000 0x1d4c000 0x1d4c000>;
+				adi,tx-path-clock-frequencies = <0x3a980000 0x7530000 0x7530000 0x3a98000 0x1d4c000 0x1d4c000>;
+				adi,gc-rx1-mode = <0x02>;
+				adi,gc-rx2-mode = <0x02>;
+				adi,gc-adc-ovr-sample-size = <0x04>;
+				adi,gc-adc-small-overload-thresh = <0x2f>;
+				adi,gc-adc-large-overload-thresh = <0x3a>;
+				adi,gc-lmt-overload-high-thresh = <0x320>;
+				adi,gc-lmt-overload-low-thresh = <0x2c0>;
+				adi,gc-dec-pow-measurement-duration = <0x2000>;
+				adi,gc-low-power-thresh = <0x18>;
+				adi,mgc-inc-gain-step = <0x02>;
+				adi,mgc-dec-gain-step = <0x02>;
+				adi,mgc-split-table-ctrl-inp-gain-mode = <0x00>;
+				adi,agc-attack-delay-extra-margin-us = <0x01>;
+				adi,agc-outer-thresh-high = <0x05>;
+				adi,agc-outer-thresh-high-dec-steps = <0x02>;
+				adi,agc-inner-thresh-high = <0x0a>;
+				adi,agc-inner-thresh-high-dec-steps = <0x01>;
+				adi,agc-inner-thresh-low = <0x0c>;
+				adi,agc-inner-thresh-low-inc-steps = <0x01>;
+				adi,agc-outer-thresh-low = <0x12>;
+				adi,agc-outer-thresh-low-inc-steps = <0x02>;
+				adi,agc-adc-small-overload-exceed-counter = <0x0a>;
+				adi,agc-adc-large-overload-exceed-counter = <0x0a>;
+				adi,agc-adc-large-overload-inc-steps = <0x02>;
+				adi,agc-lmt-overload-large-exceed-counter = <0x0a>;
+				adi,agc-lmt-overload-small-exceed-counter = <0x0a>;
+				adi,agc-lmt-overload-large-inc-steps = <0x02>;
+				adi,agc-gain-update-interval-us = <0x3e8>;
+				adi,fagc-dec-pow-measurement-duration = <0x40>;
+				adi,fagc-lp-thresh-increment-steps = <0x01>;
+				adi,fagc-lp-thresh-increment-time = <0x05>;
+				adi,fagc-energy-lost-stronger-sig-gain-lock-exit-cnt = <0x08>;
+				adi,fagc-final-overrange-count = <0x03>;
+				adi,fagc-gain-index-type-after-exit-rx-mode = <0x00>;
+				adi,fagc-lmt-final-settling-steps = <0x01>;
+				adi,fagc-lock-level = <0x0a>;
+				adi,fagc-lock-level-gain-increase-upper-limit = <0x05>;
+				adi,fagc-lock-level-lmt-gain-increase-enable;
+				adi,fagc-lpf-final-settling-steps = <0x01>;
+				adi,fagc-optimized-gain-offset = <0x05>;
+				adi,fagc-power-measurement-duration-in-state5 = <0x40>;
+				adi,fagc-rst-gla-engergy-lost-goto-optim-gain-enable;
+				adi,fagc-rst-gla-engergy-lost-sig-thresh-below-ll = <0x0a>;
+				adi,fagc-rst-gla-engergy-lost-sig-thresh-exceeded-enable;
+				adi,fagc-rst-gla-if-en-agc-pulled-high-mode = <0x00>;
+				adi,fagc-rst-gla-large-adc-overload-enable;
+				adi,fagc-rst-gla-large-lmt-overload-enable;
+				adi,fagc-rst-gla-stronger-sig-thresh-above-ll = <0x0a>;
+				adi,fagc-rst-gla-stronger-sig-thresh-exceeded-enable;
+				adi,fagc-state-wait-time-ns = <0x104>;
+				adi,fagc-use-last-lock-level-for-set-gain-enable;
+				adi,rssi-restart-mode = <0x03>;
+				adi,rssi-delay = <0x01>;
+				adi,rssi-wait = <0x01>;
+				adi,rssi-duration = <0x3e8>;
+				adi,ctrl-outs-index = <0x00>;
+				adi,ctrl-outs-enable-mask = <0xff>;
+				adi,temp-sense-measurement-interval-ms = <0x3e8>;
+				adi,temp-sense-offset-signed = <0xce>;
+				adi,temp-sense-periodic-measurement-enable;
+				adi,aux-dac-manual-mode-enable;
+				adi,aux-dac1-default-value-mV = <0x00>;
+				adi,aux-dac1-rx-delay-us = <0x00>;
+				adi,aux-dac1-tx-delay-us = <0x00>;
+				adi,aux-dac2-default-value-mV = <0x00>;
+				adi,aux-dac2-rx-delay-us = <0x00>;
+				adi,aux-dac2-tx-delay-us = <0x00>;
+				adi,2rx-2tx-mode-enable;
+				
+				/* Піни для керування, використовуємо пакет номери */
+				en_agc-gpios = <0x09 0x42 0x00>;
+				reset-gpios = <0x09 0x43 0x00>;
+				
+				/* Додаємо параметри для GPIO керування зовнішніми смугами */
+				adi,gpio-settings = <0x01>;          // Вмикаємо підтримку GPIO
+				adi,band-ctl-gpios = <0x09 0x44 0x00 0x09 0x45 0x00>; // Підключаємо GPIO для RF-перемикача
+				
+				/* Керування RF-перемикачем */
+				adi,gpio-band-select-rx-mask = <0x01>;    // Маска для RX
+				adi,gpio-band-select-tx-mask = <0x02>;    // Маска для TX
+				
+				phandle = <0x17>;
+			};
+		};
+
+		spi@e0007000 {
+			compatible = "xlnx,zynq-spi-r1p6";
+			reg = <0xe0007000 0x1000>;
+			status = "disabled";
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x31 0x04>;
+			clocks = <0x02 0x1a 0x02 0x23>;
+			clock-names = "ref_clk", "pclk";
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+			phandle = <0x26>;
+		};
+
+		spi@e000d000 {
+			clock-names = "ref_clk", "pclk";
+			clocks = <0x02 0x0a 0x02 0x2b>;
+			compatible = "xlnx,zynq-qspi-1.0";
+			status = "disabled";				// Змінено на disabled, щоб звільнити піни
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x13 0x04>;
+			reg = <0xe000d000 0x1000>;
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+			is-dual = <0x00>;
+			num-cs = <0x01>;
+			spi-nor-locking-disable;
+			phandle = <0x27>;
+			pinctrl-names = "default";
+			qspi-mode = "single";
+
+			ps7-qspi@0 {
+				#address-cells = <0x01>;
+				#size-cells = <0x01>;
+				spi-tx-bus-width = <0x01>;
+				spi-rx-bus-width = <0x04>;
+				compatible = "jedec,spi-nor";
+				reg = <0x00>;
+				spi-max-frequency = <0x2faf080>;
+				phandle = <0x28>;
+
+				partition@qspi-fsbl-uboot {
+					label = "qspi-fsbl-uboot";
+					reg = <0x00 0x100000>;
+				};
+
+				partition@qspi-uboot-env {
+					label = "qspi-uboot-env";
+					reg = <0x100000 0x20000>;
+				};
+
+				partition@qspi-nvmfs {
+					label = "qspi-nvmfs";
+					reg = <0x120000 0xe0000>;
+				};
+
+				partition@qspi-linux {
+					label = "qspi-linux";
+					reg = <0x200000 0x1e00000>;
+				};
+			};
+		};
+
+		memory-controller@e000e000 {
+			#address-cells = <0x01>;
+			#size-cells = <0x01>;
+			status = "disabled";
+			clock-names = "memclk", "apb_pclk";
+			clocks = <0x02 0x0b 0x02 0x2c>;
+			compatible = "arm,pl353-smc-r2p1", "arm,primecell";
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x12 0x04>;
+			ranges;
+			reg = <0xe000e000 0x1000>;
+			phandle = <0x29>;
+
+			flash@e1000000 {
+				status = "disabled";
+				compatible = "arm,pl353-nand-r2p1";
+				reg = <0xe1000000 0x1000000>;
+				#address-cells = <0x01>;
+				#size-cells = <0x01>;
+				phandle = <0x2a>;
+			};
+
+			flash@e2000000 {
+				status = "disabled";
+				compatible = "cfi-flash";
+				reg = <0xe2000000 0x2000000>;
+				#address-cells = <0x01>;
+				#size-cells = <0x01>;
+				phandle = <0x2b>;
+			};
+		};
+
+		ethernet@e000b000 {
+			compatible = "cdns,zynq-gem", "cdns,gem";
+			reg = <0xe000b000 0x1000>;
+			status = "okay";
+			interrupts = <0x00 0x16 0x04>;
+			clocks = <0x02 0x1e 0x02 0x1e 0x02 0x0d>;
+			clock-names = "pclk", "hclk", "tx_clk";
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+			phy-mode = "rgmii-id";
+			phy-handle = <0x0a>;
+			pinctrl-names = "default";
+			pinctrl-0 = <0x0b>;
+			phandle = <0x2c>;
+
+			ethernet-phy@1 {
+				reg = <0x01>;
+				device_type = "ethernet-phy";
+				phandle = <0x0a>;
+			};
+		};
+
+		ethernet@e000c000 {
+			compatible = "cdns,zynq-gem", "cdns,gem";
+			reg = <0xe000c000 0x1000>;
+			status = "disabled";
+			interrupts = <0x00 0x2d 0x04>;
+			clocks = <0x02 0x1f 0x02 0x1f 0x02 0x0e>;
+			clock-names = "pclk", "hclk", "tx_clk";
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+			phandle = <0x2d>;
+		};
+
+		mmc@e0100000 {
+			compatible = "arasan,sdhci-8.9a";
+			status = "okay";
+			clock-names = "clk_xin", "clk_ahb";
+			clocks = <0x02 0x15 0x02 0x20>;
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x18 0x04>;
+			reg = <0xe0100000 0x1000>;
+			disable-wp;
+			phandle = <0x2e>;
+		};
+
+		mmc@e0101000 {
+			compatible = "arasan,sdhci-8.9a";
+			status = "disabled";
+			clock-names = "clk_xin", "clk_ahb";
+			clocks = <0x02 0x16 0x02 0x21>;
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x2f 0x04>;
+			reg = <0xe0101000 0x1000>;
+			phandle = <0x2f>;
+		};
+
+		slcr@f8000000 {
+			u-boot,dm-pre-reloc;
+			#address-cells = <0x01>;
+			#size-cells = <0x01>;
+			compatible = "xlnx,zynq-slcr", "syscon", "simple-mfd";
+			reg = <0xf8000000 0x1000>;
+			ranges;
+			phandle = <0x0c>;
+
+			clkc@100 {
+				u-boot,dm-pre-reloc;
+				#clock-cells = <0x01>;
+				compatible = "xlnx,ps7-clkc";
+				fclk-enable = <0x0f>;
+				clock-output-names = "armpll", "ddrpll", "iopll", "cpu_6or4x", "cpu_3or2x", "cpu_2x", "cpu_1x", "ddr2x", "ddr3x", "dci", "lqspi", "smc", "pcap", "gem0", "gem1", "fclk0", "fclk1", "fclk2", "fclk3", "can0", "can1", "sdio0", "sdio1", "uart0", "uart1", "spi0", "spi1", "dma", "usb0_aper", "usb1_aper", "gem0_aper", "gem1_aper", "sdio0_aper", "sdio1_aper", "spi0_aper", "spi1_aper", "can0_aper", "can1_aper", "i2c0_aper", "i2c1_aper", "uart0_aper", "uart1_aper", "gpio_aper", "lqspi_aper", "smc_aper", "swdt", "dbg_trc", "dbg_apb";
+				reg = <0x100 0x100>;
+				ps-clk-frequency = <0x1fca055>;
+				phandle = <0x02>;
+			};
+
+			rstc@200 {
+				compatible = "xlnx,zynq-reset";
+				reg = <0x200 0x48>;
+				#reset-cells = <0x01>;
+				syscon = <0x0c>;
+				phandle = <0x30>;
+			};
+
+			pinctrl@700 {
+				compatible = "xlnx,pinctrl-zynq";
+				reg = <0x700 0x200>;
+				syscon = <0x0c>;
+				phandle = <0x31>;
+
+				hdmi_default {
+					phandle = <0x75>;    // Новий phandle
+					mux {
+						groups = "gpio0_15_grp";
+						function = "gpio0";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+					};
+
+					conf {
+						pins = "MIO15";             // Використовуємо існуючий пін
+						bias-disable;
+						io-standard = <0x01>;
+					};
+				};
+
+				qspi_default {
+					phandle = <0x60>;    // Використовуємо новий phandle
+					mux {
+						function = "qspi";
+						groups = "qspi_cs1_grp";
+					};
+					conf {
+						groups = "qspi_cs1_grp";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+					};
+				};
+
+				gem0-default {
+					phandle = <0x0b>;
+
+					mux {
+						function = "ethernet0";
+						groups = "ethernet0_0_grp";
+					};
+
+					conf {
+						groups = "ethernet0_0_grp";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+					};
+
+					conf-rx {
+						pins = "MIO22", "MIO23", "MIO24", "MIO25", "MIO26", "MIO27";
+						bias-high-impedance;
+						low-power-disable;
+					};
+
+					conf-tx {
+						pins = "MIO16", "MIO17", "MIO18", "MIO19", "MIO20", "MIO21";
+						low-power-enable;
+						bias-disable;
+					};
+
+					mux-mdio {
+						function = "mdio0";
+						groups = "mdio0_0_grp";
+						pins = "MIO52", "MIO53";
+					};
+
+					conf-mdio {
+						groups = "mdio0_0_grp";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+						bias-disable;
+					};
+				};
+
+				usb0-default {
+					phandle = <0x32>;
+
+					mux {
+						groups = "usb0_0_grp";
+						function = "usb0";
+					};
+
+					conf {
+						groups = "usb0_0_grp";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+					};
+
+					conf-rx {
+						pins = "MIO29", "MIO31", "MIO36";
+						bias-high-impedance;
+					};
+
+					conf-pull-up {
+						pins = "MIO46";
+						bias-pull-up;
+					};
+
+					conf-tx {
+						pins = "MIO28", "MIO30", "MIO32", "MIO33", "MIO34", "MIO35", "MIO37", "MIO38", "MIO39";
+						bias-disable;
+					};
+				};
+
+				dip_switch_default {
+					phandle = <0x56>;
+					mux {
+						pins = "MIO4", "MIO5", "MIO7", "MIO8";
+						function = "gpio0";
+					};
+					conf {
+						pins = "MIO4", "MIO5", "MIO7", "MIO8";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+						bias-pull-up;
+						input-enable;
+						input-schmitt-enable;
+					};
+				};
+
+				buttons_default {
+					phandle = <0x58>;
+					mux {
+						function = "gpio0";
+						groups = "gpio0_0_grp", "gpio0_1_grp";
+					};
+					conf {
+						groups = "gpio0_0_grp", "gpio0_1_grp";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+					};
+					conf-pull-up {
+						pins = "MIO0", "MIO1";
+						bias-pull-up;
+					};			
+				};
+
+				gpio0-default {
+					phandle = <0x33>;
+
+					mux {
+						function = "gpio0";
+						groups = "gpio0_7_grp", "gpio0_11_grp", "gpio0_14_grp", "gpio0_46_grp";
+					};
+
+					conf {
+						groups = "gpio0_7_grp", "gpio0_11_grp", "gpio0_14_grp", "gpio0_46_grp";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+					};
+
+					conf-pull-up {
+						pins = "MIO14";
+						bias-pull-up;
+					};
+
+					conf-pull-none {
+						pins = "MIO7", "MIO11";
+						bias-disable;
+					};
+				};
+
+				sdhci0-default {
+					phandle = <0x34>;
+
+					mux {
+						groups = "sdio0_2_grp";
+						function = "sdio0";
+					};
+
+					conf {
+						groups = "sdio0_2_grp";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+						bias-disable;
+					};
+
+					mux-cd {
+						groups = "gpio0_47_grp";
+						function = "sdio0_cd";
+					};
+
+					conf-cd {
+						groups = "gpio0_47_grp";
+						bias-high-impedance;
+						bias-pull-up;
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+					};
+				};
+
+				uart1-default {
+					phandle = <0x35>;
+
+					mux {
+						groups = "uart1_1_grp";
+						function = "uart1";
+					};
+
+					conf {
+						groups = "uart1_1_grp";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+					};
+
+					conf-rx {
+						pins = "MIO13";
+						bias-high-impedance;
+					};
+
+					conf-tx {
+						pins = "MIO12";
+						bias-disable;
+					};
+				};
+				led_default {
+					phandle = <0x59>;
+					mux {
+						function = "gpio0";
+						groups = "gpio0_15_grp";
+					};
+					conf {
+						groups = "gpio0_15_grp";
+						slew-rate = <0x00>;
+						io-standard = <0x01>;
+					};
+					conf-pull-up {
+						pins = "MIO15";
+						bias-pull-up;
+					};
+				};
+			};
+		};
+
+		dmac@f8003000 {
+			compatible = "arm,pl330", "arm,primecell";
+			reg = <0xf8003000 0x1000>;
+			interrupt-parent = <0x01>;
+			interrupt-names = "abort", "dma0", "dma1", "dma2", "dma3", "dma4", "dma5", "dma6", "dma7";
+			interrupts = <0x00 0x0d 0x04 0x00 0x0e 0x04 0x00 0x0f 0x04 0x00 0x10 0x04 0x00 0x11 0x04 0x00 0x28 0x04 0x00 0x29 0x04 0x00 0x2a 0x04 0x00 0x2b 0x04>;
+			#dma-cells = <0x01>;
+			#dma-channels = <0x08>;
+			#dma-requests = <0x04>;
+			clocks = <0x02 0x1b>;
+			clock-names = "apb_pclk";
+			phandle = <0x36>;
+		};
+
+		devcfg@f8007000 {
+			compatible = "xlnx,zynq-devcfg-1.0";
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x08 0x04>;
+			reg = <0xf8007000 0x100>;
+			clocks = <0x02 0x0c 0x02 0x0f 0x02 0x10 0x02 0x11 0x02 0x12>;
+			clock-names = "ref_clk", "fclk0", "fclk1", "fclk2", "fclk3";
+			syscon = <0x0c>;
+			phandle = <0x04>;
+		};
+
+		efuse@f800d000 {
+			compatible = "xlnx,zynq-efuse";
+			reg = <0xf800d000 0x20>;
+			phandle = <0x37>;
+		};
+
+		timer@f8f00200 {
+			compatible = "arm,cortex-a9-global-timer";
+			reg = <0xf8f00200 0x20>;
+			interrupts = <0x01 0x0b 0x301>;
+			interrupt-parent = <0x01>;
+			clocks = <0x02 0x04>;
+			phandle = <0x38>;
+		};
+
+		timer@f8001000 {
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x0a 0x04 0x00 0x0b 0x04 0x00 0x0c 0x04>;
+			compatible = "cdns,ttc";
+			clocks = <0x02 0x06>;
+			reg = <0xf8001000 0x1000>;
+			phandle = <0x39>;
+		};
+
+		timer@f8002000 {
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x25 0x04 0x00 0x26 0x04 0x00 0x27 0x04>;
+			compatible = "cdns,ttc";
+			clocks = <0x02 0x06>;
+			reg = <0xf8002000 0x1000>;
+			phandle = <0x3a>;
+		};
+
+		timer@f8f00600 {
+			interrupt-parent = <0x01>;
+			interrupts = <0x01 0x0d 0x301>;
+			compatible = "arm,cortex-a9-twd-timer";
+			reg = <0xf8f00600 0x20>;
+			clocks = <0x02 0x04>;
+			phandle = <0x3b>;
+		};
+
+		usb@e0002000 {
+			compatible = "xlnx,zynq-usb-2.20a", "chipidea,usb2";
+			status = "okay";
+			clocks = <0x02 0x1c>;
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x15 0x04>;
+			reg = <0xe0002000 0x1000>;
+			phy_type = "ulpi";
+			dr_mode = "otg";
+			xlnx,phy-reset-gpio = <0x09 0x34 0x00>;
+			phandle = <0x3c>;
+		};
+
+		usb@e0003000 {
+			compatible = "xlnx,zynq-usb-2.20a", "chipidea,usb2";
+			status = "disabled";
+			clocks = <0x02 0x1d>;
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x2c 0x04>;
+			reg = <0xe0003000 0x1000>;
+			phy_type = "ulpi";
+			phandle = <0x3d>;
+		};
+
+		watchdog@f8005000 {
+			clocks = <0x02 0x2d>;
+			compatible = "cdns,wdt-r1p2";
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x09 0x01>;
+			reg = <0xf8005000 0x1000>;
+			timeout-sec = <0x0a>;
+			status = "okay";
+			reset-on-timeout;
+			phandle = <0x3e>;
+		};
+
+		etb@f8801000 {
+			compatible = "arm,coresight-etb10", "arm,primecell";
+			reg = <0xf8801000 0x1000>;
+			clocks = <0x02 0x1b 0x02 0x2e 0x02 0x2f>;
+			clock-names = "apb_pclk", "dbg_trc", "dbg_apb";
+
+			in-ports {
+
+				port {
+
+					endpoint {
+						remote-endpoint = <0x0d>;
+						phandle = <0x06>;
+					};
+				};
+			};
+		};
+
+		tpiu@f8803000 {
+			compatible = "arm,coresight-tpiu", "arm,primecell";
+			reg = <0xf8803000 0x1000>;
+			clocks = <0x02 0x1b 0x02 0x2e 0x02 0x2f>;
+			clock-names = "apb_pclk", "dbg_trc", "dbg_apb";
+
+			in-ports {
+
+				port {
+
+					endpoint {
+						remote-endpoint = <0x0e>;
+						phandle = <0x05>;
+					};
+				};
+			};
+		};
+
+		funnel@f8804000 {
+			compatible = "arm,coresight-static-funnel", "arm,primecell";
+			reg = <0xf8804000 0x1000>;
+			clocks = <0x02 0x1b 0x02 0x2e 0x02 0x2f>;
+			clock-names = "apb_pclk", "dbg_trc", "dbg_apb";
+
+			out-ports {
+
+				port {
+
+					endpoint {
+						remote-endpoint = <0x0f>;
+						phandle = <0x07>;
+					};
+				};
+			};
+
+			in-ports {
+				#address-cells = <0x01>;
+				#size-cells = <0x00>;
+
+				port@0 {
+					reg = <0x00>;
+
+					endpoint {
+						remote-endpoint = <0x10>;
+						phandle = <0x13>;
+					};
+				};
+
+				port@1 {
+					reg = <0x01>;
+
+					endpoint {
+						remote-endpoint = <0x11>;
+						phandle = <0x15>;
+					};
+				};
+
+				port@2 {
+					reg = <0x02>;
+
+					endpoint {
+						phandle = <0x3f>;
+					};
+				};
+			};
+		};
+
+		ptm@f889c000 {
+			compatible = "arm,coresight-etm3x", "arm,primecell";
+			reg = <0xf889c000 0x1000>;
+			clocks = <0x02 0x1b 0x02 0x2e 0x02 0x2f>;
+			clock-names = "apb_pclk", "dbg_trc", "dbg_apb";
+			cpu = <0x12>;
+
+			out-ports {
+
+				port {
+
+					endpoint {
+						remote-endpoint = <0x13>;
+						phandle = <0x10>;
+					};
+				};
+			};
+		};
+
+		ptm@f889d000 {
+			compatible = "arm,coresight-etm3x", "arm,primecell";
+			reg = <0xf889d000 0x1000>;
+			clocks = <0x02 0x1b 0x02 0x2e 0x02 0x2f>;
+			clock-names = "apb_pclk", "dbg_trc", "dbg_apb";
+			cpu = <0x14>;
+
+			out-ports {
+
+				port {
+
+					endpoint {
+						remote-endpoint = <0x15>;
+						phandle = <0x11>;
+					};
+				};
+			};
+		};
+	};
+
+	aliases {
+		ethernet0 = "/axi/ethernet@e000b000";
+		serial0 = "/axi/serial@e0001000";
+		mmc0 = "/axi/mmc@e0100000";
+		hdmi0 = "/fpga-axi@0/v_tc_0@43c10000";
+		hdmi_phy0 = "/fpga-axi@0/clk_wiz_0@43c00000";
+		framebuffer0 = "/axi/framebuffer@38000000";
+		phandle = <0x40>;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x00 0x40000000>;	// 1GB total (0x40000000 = 1GB)
+	};
+
+	chosen {
+		stdout-path = "/amba@0/uart@E0001000";
+		bootargs = "console=ttyPS0,115200 root=/dev/ram0 rw earlyprintk memmap=8M$0x38000000";		
+		linux,framebuffer-start = <0x38000000>;
+		linux,framebuffer-size = <0x00800000>;
+	};
+
+	clocks {
+
+		clock@0 {
+			#clock-cells = <0x00>;
+			compatible = "adjustable-clock";
+			clock-frequency = <0x2625a00>;  // 39.064 МГц для AD9361, залишаємо як є
+			clock-accuracy = <0x30d40>;
+			clock-output-names = "ad9361_ext_refclk";
+			phandle = <0x08>;
+		};
+
+		ps_clk: ps_clk {
+			#clock-cells = <0x00>;
+			compatible = "fixed-clock";
+			clock-frequency = <100000000>;  // 100 МГц загальна частота
+			clock-output-names = "ps_clk";
+			phandle = <0x78>;  // Призначаємо новий phandle
+		};
+
+		ad9361_clk: ad9361_clk {
+			#clock-cells = <0x00>;
+			compatible = "fixed-clock";
+			clock-frequency = <200000000>;  // 200 МГц для AD9361
+			clock-output-names = "ad9361_clk";
+			phandle = <0x79>;  // Призначаємо новий phandle
+		};
+
+		hdmi_clock: hdmi_clock {
+			#clock-cells = <0>;
+			compatible = "fixed-clock";
+			clock-frequency = <148500000>;  // 148.5 МГц для HDMI 1080p точно так як в нашому блок-дизайні
+			clock-names = "hdmi_clk";
+			clock-output-names = "hdmi_clk";
+			always-enabled;
+			assigned-clock-rates = <148500000>;  // Змінено відповідно до блок-дизайну 720p
+			phandle = <0x80>;
+		};
+	};
+
+	fpga-axi@0 {
+		compatible = "simple-bus";
+		#address-cells = <0x01>;
+		#size-cells = <0x01>;
+		ranges;
+		phandle = <0x41>;
+		
+		axi_vdma@43000000  {
+			compatible = "xlnx,axi-vdma-6.3";
+			reg = <0x43000000 0x10000>;
+			#dma-cells = <1>;           // Явне визначення dma-cells
+			interrupts = <0x00 0x1e 0x04>;  // 0 30 4 у шістнадцятковій системі
+			xlnx,num-fstores = <3>;
+			xlnx,flush-fsync = <1>;
+			clocks = <0x02 0x0f>;  // Використовуємо системний годинник
+			clock-names = "s_axi_aclk";
+			phandle = <0x76>;
+
+			dma-channel@43000000 {
+				compatible = "xlnx,axi-vdma-mm2s-channel";
+				interrupts = <0x00 0x1e 0x04>;  // 0 30 4 у шістнадцятковій системі
+				xlnx,datawidth = <24>;
+				xlnx,genlock-mode = <0>;
+				phandle = <0x77>;
+			};
+		};
+		
+		clk_wiz_0@43c00000 {    // Змінюємо адресу
+			compatible = "xlnx,clk-wiz-1.0";  // Змінюємо compatible
+			reg = <0x43c00000 0x1000>;
+			clocks = <0x02 0x0f>;  // Використовуємо системний годинник
+			clock-names = "hdmi_clk";
+			clock-output-names = "pix_clk", "pix_clk_5x";
+			status = "okay";
+			phandle = <0x71>;
+			#clock-cells = <0x01>;    // Додаємо
+
+			port {
+				endpoint {
+					remote-endpoint = <0x73>;  // Підключаємо до v_tc port@1
+					phandle = <0x74>;
+				};
+			};
+		};
+
+		v_tc_0@43c10000 {          // Змінюємо ім'я ноди
+			compatible = "xlnx,v-tc-6.1";  // Залишаємо тільки один compatible
+			reg = <0x43c10000 0x1000>;
+			interrupts = <0x00 0x1e 0x04>;  // 0x1e = 30 у шістнадцятковій системі
+			status = "okay";
+			clocks = <0x80>; 
+			clock-names = "hdmi_clk";
+			dmas = <0x76 0x00>; 			// Виправлено на правильний phandle VDMA
+			dma-names = "hdmi-tx";			// Змінюємо на hdmi-tx
+			phy-handle = <0x71>;			// Додаємо
+			video-phy = <0x71>;				// Додаємо
+			video-input {
+				clock-frequency = <148500000>;    // Синхронізуємо з HDMI годинником
+				hactive = <1280>;
+				vactive = <720>;
+				hfront-porch = <110>;
+				hsync-len = <40>;
+				hback-porch = <220>;
+				vfront-porch = <5>;
+				vsync-len = <5>;
+				vback-porch = <20>;
+				hsync-pol = <1>;    // positive
+				vsync-pol = <1>;    // positive
+			};
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@0 {
+					reg = <0>;
+					endpoint {
+						remote-endpoint = <0x77>;  // Підключаємо до VDMA каналу
+						phandle = <0x72>;
+					};
+				};
+				port@1 {
+					reg = <1>;
+					endpoint {
+						remote-endpoint = <0x74>;		    // підключаємо до PHY
+						phandle = <0x73>;
+					};
+				};
+			};
+		};
+			
+		hdmi_gpio_cec@41200000 {
+			compatible = "xlnx,axi-gpio-2.0";
+			reg = <0x41200000 0x10000>;
+			status = "okay";
+			#gpio-cells = <0x02>;
+			gpio-controller;
+			clocks = <0x02 0x0f>;  // Системний годинник
+			phandle = <0x90>;
+		};
+
+		i2c@41600000 {
+			compatible = "xlnx,axi-iic-1.02.a", "xlnx,xps-iic-2.00.a";
+			status = "disabled";
+			reg = <0x41600000 0x10000>;
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x3b 0x04>;
+			clocks = <0x02 0x0f>;
+			clock-names = "pclk";
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+			phandle = <0x42>;
+
+			current_limiter@5a {
+				compatible = "adi,adm1177-iio";
+				reg = <0x5a>;
+				adi,r-sense-mohm = <0x32>;
+				adi,shutdown-threshold-ma = <0x423>;
+				adi,vrange-high-enable;
+			};
+		};
+		
+		iic_hdmi@41610000 {
+			compatible = "xlnx,axi-iic-2.0";
+			reg = <0x41610000 0x10000>;
+			status = "okay";
+			#address-cells = <0x01>;
+			#size-cells = <0x00>;
+			clocks = <0x02 0x0f>;  // Системн
+			phandle = <0x91>;
+		};
+
+		dma@7c400000 {						//DMA контролер для ADC (приймальна частина)
+			compatible = "adi,axi-dmac-1.00.a";
+			reg = <0x7c400000 0x10000>;
+			#dma-cells = <0x01>;
+			interrupts = <0x00 0x39 0x04>;
+			clocks = <0x79>; 				// тактуються від того ж годинника, що й AD9361 200 МГц
+			clock-names = "s_axi_aclk";
+			phandle = <0x16>;
+
+			adi,channels {
+				#size-cells = <0x00>;
+				#address-cells = <0x01>;
+
+				dma-channel@0 {
+					reg = <0x00>;
+					adi,source-bus-width = <0x20>;
+					adi,source-bus-type = <0x02>;
+					adi,destination-bus-width = <0x40>;
+					adi,destination-bus-type = <0x00>;
+				};
+			};
+		};
+
+		dma@7c420000 {						//DMA контролер для DAC (передавальна частина)
+			compatible = "adi,axi-dmac-1.00.a";
+			reg = <0x7c420000 0x10000>;
+			#dma-cells = <1>;
+			interrupts = <0x00 0x38 0x04>;
+			clocks = <0x79>; 				// тактуються від того ж годинника, що й AD9361 200 МГц
+			phandle = <0x18>;
+
+			adi,channels {
+				#size-cells = <0>;
+				#address-cells = <1>;
+
+				dma-channel@0 {
+					reg = <0>;
+					adi,source-bus-width = <64>;      // Перевіряємо ширину шини
+					adi,source-bus-type = <0>;       // AXI-MM тип
+					adi,destination-bus-width = <64>; // Для HDMI
+					adi,destination-bus-type = <1>;  // AXI-Stream тип
+				};
+			};
+		};
+
+		cf-ad9361-lpc@79020000 {					//Радіочастотний інтерфейс AD9361
+			compatible = "adi,axi-ad9361-6.00.a";
+			reg = <0x79020000 0x6000>;
+			dmas = <0x16 0x00>;
+			dma-names = "rx";
+			spibus-connected = <0x17>;
+			adi,axi-decimation-core-available;
+			phandle = <0x43>;
+			// Додаємо критично необхідні параметри
+			interrupt-parent = <0x01>;
+			interrupts = <0x00 0x39 0x04>;
+			clocks = <0x79>;
+			clock-names = "s_axi_aclk";
+		};
+
+		cf-ad9361-dds-core-lpc@79024000 {			//це нода для DDS ядра AD9361 (передавальна частина)
+			compatible = "adi,axi-ad9361-dds-6.00.a";
+			reg = <0x79024000 0x1000>;
+			clocks = <0x17 0x0d>;
+			clock-names = "sampl_clk";
+			dmas = <0x18 0x00>;
+			dma-names = "tx";
+			adi,axi-interpolation-core-available;
+			adi,axi-dds-default-scale = <0x00>;
+			phandle = <0x44>;
+		};
+
+		//		mwipcore@43c00000 {
+		//			compatible = "mathworks,mwipcore-axi4lite-v1.00";
+		//			reg = <0x43c00000 0xffff>;
+		//			clocks = <0x78>; /* ps_clk, якщо використовує 100 МГц */
+		//			clock-names = "s_axi_aclk";
+		//		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		pinctrl-names = "default";
+		pinctrl-0 = <0x59>;  // Додано посилання на нову led_default конфігурацію
+
+		led0 {
+			label = "led0:green";
+			gpios = <0x09 0x0f 0x00>;	// використовуємо правильний базовий адрес
+			linux,default-trigger = "heartbeat";
+		};
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+		autorepeat;
+		pinctrl-names = "default";
+		pinctrl-0 = <0x58>;  // Додано посилання на buttons_default конфігурацію
+
+		reset {
+			label = "Reset Button";
+			gpios = <0x09 0x00 0x01>;	// PS_PRO_B використовуємо правильний базовий адрес
+			linux,code = <0x74>;		// KEY_POWER
+			wakeup-source;
+			debounce-interval = <0x64>;
+		};
+
+		user {
+			label = "User Button";
+			gpios = <0x09 0x01 0x01>;	// PS_MIO0_500 використовуємо правильний базовий адрес
+			linux,code = <0x100>;		// KEY_RESTART
+			debounce-interval = <0x64>;
+		};
+	};
+
+	__symbols__ {
+		cpu0 = "/cpus/cpu@0";
+		cpu1 = "/cpus/cpu@1";
+		fpga_full = "/fpga-full";
+		regulator_vccpint = "/fixedregulator";
+		replicator_out_port0 = "/replicator/out-ports/port@0/endpoint";
+		replicator_out_port1 = "/replicator/out-ports/port@1/endpoint";
+		replicator_in_port0 = "/replicator/in-ports/port/endpoint";
+		amba = "/axi";
+		adc = "/axi/adc@f8007100";
+		can0 = "/axi/can@e0008000";
+		can1 = "/axi/can@e0009000";
+		gpio0 = "/axi/gpio@e000a000";
+		i2c0 = "/axi/i2c@e0004000";
+		i2c1 = "/axi/i2c@e0005000";
+		intc = "/axi/interrupt-controller@f8f01000";
+		L2 = "/axi/cache-controller@f8f02000";
+		mc = "/axi/memory-controller@f8006000";
+		ocmc = "/axi/ocmc@f800c000";
+		uart0 = "/axi/serial@e0000000";
+		uart1 = "/axi/serial@e0001000";
+		spi0 = "/axi/spi@e0006000";
+		adc0_ad9361 = "/axi/spi@e0006000/ad9361-phy@0";
+		spi1 = "/axi/spi@e0007000";
+		qspi = "/axi/spi@e000d000";
+		primary_flash = "/axi/spi@e000d000/ps7-qspi@0";
+		smcc = "/axi/memory-controller@e000e000";
+		nand0 = "/axi/memory-controller@e000e000/flash@e1000000";
+		nor0 = "/axi/memory-controller@e000e000/flash@e2000000";
+		gem0 = "/axi/ethernet@e000b000";
+		ethernet_phy = "/axi/ethernet@e000b000/ethernet-phy@1";
+		gem1 = "/axi/ethernet@e000c000";
+		sdhci0 = "/axi/mmc@e0100000";
+		sdhci1 = "/axi/mmc@e0101000";
+		slcr = "/axi/slcr@f8000000";
+		clkc = "/axi/slcr@f8000000/clkc@100";
+		rstc = "/axi/slcr@f8000000/rstc@200";
+		pinctrl0 = "/axi/slcr@f8000000/pinctrl@700";
+		pinctrl_gem0_default = "/axi/slcr@f8000000/pinctrl@700/gem0-default";
+		pinctrl_usb0_default = "/axi/slcr@f8000000/pinctrl@700/usb0-default";
+		pinctrl_gpio0_default = "/axi/slcr@f8000000/pinctrl@700/gpio0-default";
+		pinctrl_sdhci0_default = "/axi/slcr@f8000000/pinctrl@700/sdhci0-default";
+		pinctrl_uart1_default = "/axi/slcr@f8000000/pinctrl@700/uart1-default";
+		dmac_s = "/axi/dmac@f8003000";
+		devcfg = "/axi/devcfg@f8007000";
+		efuse = "/axi/efuse@f800d000";
+		global_timer = "/axi/timer@f8f00200";
+		ttc0 = "/axi/timer@f8001000";
+		ttc1 = "/axi/timer@f8002000";
+		scutimer = "/axi/timer@f8f00600";
+		usb0 = "/axi/usb@e0002000";
+		usb1 = "/axi/usb@e0003000";
+		watchdog0 = "/axi/watchdog@f8005000";
+		etb_in_port = "/axi/etb@f8801000/in-ports/port/endpoint";
+		tpiu_in_port = "/axi/tpiu@f8803000/in-ports/port/endpoint";
+		funnel_out_port = "/axi/funnel@f8804000/out-ports/port/endpoint";
+		funnel0_in_port0 = "/axi/funnel@f8804000/in-ports/port@0/endpoint";
+		funnel0_in_port1 = "/axi/funnel@f8804000/in-ports/port@1/endpoint";
+		funnel0_in_port2 = "/axi/funnel@f8804000/in-ports/port@2/endpoint";
+		ptm0_out_port = "/axi/ptm@f889c000/out-ports/port/endpoint";
+		ptm1_out_port = "/axi/ptm@f889d000/out-ports/port/endpoint";
+		aliases = "/aliases";
+		ad9361_clkin = "/clocks/clock@0";
+		fpga_axi = "/fpga-axi@0";
+		axi_i2c0 = "/fpga-axi@0/i2c@41600000";
+		hdmi_phy = "/fpga-axi@0/clk_wiz_0@43c00000";
+		hdmi_tx = "/fpga-axi@0/v_tc_0@43c10000";
+		rx_dma = "/fpga-axi@0/dma@7c400000";
+		tx_dma = "/fpga-axi@0/dma@7c420000";
+		cf_ad9364_adc_core_0 = "/fpga-axi@0/cf-ad9361-lpc@79020000";
+		cf_ad9364_dac_core_0 = "/fpga-axi@0/cf-ad9361-dds-core-lpc@79024000";
+	};
+};

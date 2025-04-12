@@ -1,0 +1,3 @@
+[submodule "fpga/hdl"]
+	path = fpga/hdl
+	url = https://github.com/analogdevicesinc/hdl

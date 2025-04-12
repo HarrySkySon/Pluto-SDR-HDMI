@@ -1,0 +1,6 @@
+modeboot=sdboot
+bootcmd=fatload mmc 0 ${fit_load_address} ${boot_image} && bootm ${fit_load_address}
+bootdelay=3
+boot_image=pluto_txrx.bin
+fit_load_address=0x2080000
+bootargs=console=ttyPS0,115200 maxcpus=2 root=/dev/ram0 rw
